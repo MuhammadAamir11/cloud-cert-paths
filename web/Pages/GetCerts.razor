@@ -1,0 +1,53 @@
+@page "/getcerts"
+@inject HttpClient Http
+
+<h3>Certifications</h3>
+
+@if (certs == null)
+{
+    <p><em>Loading certifications...</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Certification Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in certs)
+            {
+                <tr>
+                    <td>@c.Id</td>
+                    <td>@c.Name</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private Cert[]? certs;
+
+    // Define a simple C# model matching the JSON shape returned by GetCerts.cs
+    public class Cert
+    {
+        public int Id { get; set; }
+        public string? Name { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Fetch JSON from your Azure Function
+            certs = await Http.GetFromJsonAsync<Cert[]>("/api/GetCerts");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error fetching data: {ex.Message}");
+        }
+    }
+}
