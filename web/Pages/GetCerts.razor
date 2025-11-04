@@ -3,51 +3,80 @@
 
 <h3>Certifications</h3>
 
-@if (certs == null)
+@if (certs is null)
 {
     <p><em>Loading certifications...</em></p>
 }
 else
 {
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Certification Name</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var c in certs)
-            {
+    <div class="mb-3 d-flex gap-2">
+        <input class="form-control" style="max-width: 420px;"
+               placeholder="🔍 Search by name or ID..."
+               @bind="searchTerm" @bind:event="oninput" />
+        <button class="btn btn-outline-secondary" @onclick="ClearSearch" disabled="@string.IsNullOrWhiteSpace(searchTerm)">Clear</button>
+    </div>
+
+    <p class="text-muted mb-2">
+        Showing <strong>@FilteredCerts.Count()</strong> of <strong>@certs.Length</strong> certifications
+    </p>
+
+    @if (!FilteredCerts.Any())
+    {
+        <div class="alert alert-warning">No certifications match “@searchTerm”.</div>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    <td>@c.Id</td>
-                    <td>@c.Name</td>
+                    <th style="width:100px;">ID</th>
+                    <th>Certification Name</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var c in FilteredCerts)
+                {
+                    <tr>
+                        <td>@c.Id</td>
+                        <td>@c.Name</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 }
 
 @code {
     private Cert[]? certs;
+    private string? searchTerm = "";
 
-    // Define a simple C# model matching the JSON shape returned by GetCerts.cs
+    // JSON model returned by /api/GetCerts
     public class Cert
     {
         public int Id { get; set; }
         public string? Name { get; set; }
     }
 
+    // Live, case-insensitive filter by Name or Id text
+    private IEnumerable<Cert> FilteredCerts =>
+        (certs ?? Array.Empty<Cert>())
+            .Where(c =>
+                string.IsNullOrWhiteSpace(searchTerm)
+                || (c.Name?.Contains(searchTerm!, StringComparison.OrdinalIgnoreCase) ?? false)
+                || c.Id.ToString().Contains(searchTerm!, StringComparison.OrdinalIgnoreCase));
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Fetch JSON from your Azure Function
             certs = await Http.GetFromJsonAsync<Cert[]>("/api/GetCerts");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Error fetching data: {ex.Message}");
+            certs = Array.Empty<Cert>();
         }
     }
+
+    private void ClearSearch() => searchTerm = "";
 }
