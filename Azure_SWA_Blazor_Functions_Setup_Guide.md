@@ -114,6 +114,8 @@ Browser (http://localhost:4281)
 chmod +x run-all.sh
 ./run-all.sh
 
+5. Now making one click solution
+
 
 
 
