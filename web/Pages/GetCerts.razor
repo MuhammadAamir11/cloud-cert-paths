@@ -1,4 +1,6 @@
 @page "/getcerts"
+@using System.Text.RegularExpressions
+@using System.Net
 @inject HttpClient Http
 
 <h3>Certifications</h3>
@@ -9,27 +11,48 @@
 }
 else
 {
-    <div class="mb-3 d-flex gap-2">
+    <!-- Controls: search input + provider dropdown + Clear button -->
+    <div class="mb-3 d-flex gap-2 align-items-center">
+        <!-- Live search (oninput) across Name and Id -->
         <input class="form-control" style="max-width: 420px;"
                placeholder="🔍 Search by name or ID..."
                @bind="searchTerm" @bind:event="oninput" />
-        <button class="btn btn-outline-secondary" @onclick="ClearSearch" disabled="@string.IsNullOrWhiteSpace(searchTerm)">Clear</button>
+
+        <!-- Provider filter (All/AWS/Azure/GCP) -->
+        <select class="form-select" style="max-width: 220px;"
+                @bind="providerFilter">
+            <option value="">All Providers</option>
+            @foreach (var p in Providers)
+            {
+                <option value="@p">@p</option>
+            }
+        </select>
+
+        <!-- Quick reset -->
+        <button class="btn btn-outline-secondary"
+                @onclick="ClearSearch"
+                disabled="@string.IsNullOrWhiteSpace(searchTerm) && string.IsNullOrWhiteSpace(providerFilter)">
+            Clear
+        </button>
     </div>
 
+    <!-- Result count -->
     <p class="text-muted mb-2">
         Showing <strong>@FilteredCerts.Count()</strong> of <strong>@certs.Length</strong> certifications
     </p>
 
     @if (!FilteredCerts.Any())
     {
-        <div class="alert alert-warning">No certifications match “@searchTerm”.</div>
+        <div class="alert alert-warning">No certifications match “@searchTerm” with provider “@(providerFilter ?? "All")”.</div>
     }
     else
     {
+        <!-- Results table -->
         <table class="table table-striped">
             <thead>
                 <tr>
                     <th style="width:100px;">ID</th>
+                    <th style="width:160px;">Provider</th>
                     <th>Certification Name</th>
                 </tr>
             </thead>
@@ -38,7 +61,9 @@ else
                 {
                     <tr>
                         <td>@c.Id</td>
-                        <td>@c.Name</td>
+                        <td>@c.Provider</td>
+                        <!-- Highlight matched text in Name -->
+                        <td>@(Highlight(c.Name ?? string.Empty, searchTerm))</td>
                     </tr>
                 }
             </tbody>
@@ -47,24 +72,38 @@ else
 }
 
 @code {
-    private Cert[]? certs;
-    private string? searchTerm = "";
+    private Cert[]? certs;               // full dataset fetched from /api/GetCerts
+    private string? searchTerm = "";     // user-entered search term
+    private string? providerFilter = ""; // selected provider filter
 
-    // JSON model returned by /api/GetCerts
+    // Shape expected from the API
     public class Cert
     {
         public int Id { get; set; }
+        public string? Provider { get; set; }
         public string? Name { get; set; }
     }
 
-    // Live, case-insensitive filter by Name or Id text
+    // Distinct, sorted provider list for the dropdown
+    private IEnumerable<string> Providers =>
+        (certs ?? Array.Empty<Cert>())
+            .Select(c => c.Provider)
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(p => p)!;
+
+    // In-memory filtering by provider + search (Name or Id)
     private IEnumerable<Cert> FilteredCerts =>
         (certs ?? Array.Empty<Cert>())
             .Where(c =>
-                string.IsNullOrWhiteSpace(searchTerm)
-                || (c.Name?.Contains(searchTerm!, StringComparison.OrdinalIgnoreCase) ?? false)
-                || c.Id.ToString().Contains(searchTerm!, StringComparison.OrdinalIgnoreCase));
+                (string.IsNullOrWhiteSpace(providerFilter) ||
+                 c.Provider?.Equals(providerFilter, StringComparison.OrdinalIgnoreCase) == true)
+                &&
+                (string.IsNullOrWhiteSpace(searchTerm) ||
+                 (c.Name?.Contains(searchTerm!, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                 c.Id.ToString().Contains(searchTerm!, StringComparison.OrdinalIgnoreCase)));
 
+    // Fetch data once on load from the function
     protected override async Task OnInitializedAsync()
     {
         try
@@ -78,5 +117,26 @@ else
         }
     }
 
-    private void ClearSearch() => searchTerm = "";
+    private void ClearSearch()
+    {
+        searchTerm = "";
+        providerFilter = "";
+    }
+
+    // Safely highlight matched parts of the Name using <mark>
+    private MarkupString Highlight(string text, string? term)
+    {
+        if (string.IsNullOrWhiteSpace(term))
+            return new MarkupString(WebUtility.HtmlEncode(text));
+
+        var encoded = WebUtility.HtmlEncode(text);
+        var escaped = Regex.Escape(term);
+        var result = Regex.Replace(
+            encoded,
+            escaped,
+            m => $"<mark>{m.Value}</mark>",
+            RegexOptions.IgnoreCase);
+
+        return new MarkupString(result);
+    }
 }

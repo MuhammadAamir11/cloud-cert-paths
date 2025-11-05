@@ -1,0 +1,22 @@
+[
+  { "id": 101, "provider": "Azure", "name": "Microsoft Certified: Azure Fundamentals (AZ-900)" },
+  { "id": 102, "provider": "Azure", "name": "Azure Administrator Associate (AZ-104)" },
+  { "id": 103, "provider": "Azure", "name": "Azure Developer Associate (AZ-204)" },
+  { "id": 104, "provider": "Azure", "name": "Azure Solutions Architect Expert (AZ-305)" },
+  { "id": 105, "provider": "Azure", "name": "Azure Security Engineer Associate (AZ-500)" },
+  { "id": 106, "provider": "Azure", "name": "DevOps Engineer Expert (AZ-400)" },
+
+  { "id": 201, "provider": "AWS", "name": "AWS Certified Cloud Practitioner" },
+  { "id": 202, "provider": "AWS", "name": "AWS Certified Solutions Architect – Associate" },
+  { "id": 203, "provider": "AWS", "name": "AWS Certified Developer – Associate" },
+  { "id": 204, "provider": "AWS", "name": "AWS Certified SysOps Administrator – Associate" },
+  { "id": 205, "provider": "AWS", "name": "AWS Certified Solutions Architect – Professional" },
+  { "id": 206, "provider": "AWS", "name": "AWS Certified Security – Specialty" },
+  { "id": 207, "provider": "AWS", "name": "AWS Certified Data Analytics – Specialty" },
+
+  { "id": 301, "provider": "GCP", "name": "Google Cloud Digital Leader" },
+  { "id": 302, "provider": "GCP", "name": "Associate Cloud Engineer" },
+  { "id": 303, "provider": "GCP", "name": "Professional Cloud Architect" },
+  { "id": 304, "provider": "GCP", "name": "Professional Data Engineer" },
+  { "id": 305, "provider": "GCP", "name": "Professional Cloud Developer" }
+]
