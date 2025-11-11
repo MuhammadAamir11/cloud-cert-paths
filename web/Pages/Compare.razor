@@ -1,0 +1,112 @@
+@page "/compare"
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<h3>Certification Comparison</h3>
+
+@if (certs is null)
+{
+    <p><em>Loading certifications...</em></p>
+}
+else
+{
+    <div class="flex gap-4 mb-4">
+        <select @bind="leftId" class="p-2 border rounded">
+            <option value="">-- Select Left --</option>
+            @foreach (var c in certs)
+            {
+                <option value="@c.Id">@c.Name</option>
+            }
+        </select>
+
+        <select @bind="rightId" class="p-2 border rounded">
+            <option value="">-- Select Right --</option>
+            @foreach (var c in certs)
+            {
+                <option value="@c.Id">@c.Name</option>
+            }
+        </select>
+
+        <button class="p-2 bg-blue-600 text-white rounded" @onclick="DoCompare">Compare</button>
+    </div>
+
+    @if (result is not null)
+    {
+        <div class="mt-4 border p-4 rounded bg-gray-50">
+            <h4>Summary</h4>
+            <ul>
+                <li><b>Level Difference:</b> @result.Summary.LevelDifference</li>
+                <li><b>Role Overlap:</b> @result.Summary.RoleOverlap %</li>
+                <li><b>Domain Overlap:</b> @result.Summary.DomainOverlap %</li>
+                <li><b>Cost Difference:</b> @result.Summary.CostDeltaUsd USD</li>
+                <li><b>Duration Difference:</b> @result.Summary.DurationDelta minutes</li>
+            </ul>
+        </div>
+
+        <table class="mt-4 border-collapse border w-full">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border p-2 w-1/2">Left: @result.Left.Name</th>
+                    <th class="border p-2 w-1/2">Right: @result.Right.Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td class="border p-2">@result.Left.Provider</td><td class="border p-2">@result.Right.Provider</td></tr>
+                <tr><td class="border p-2">@result.Left.Level</td><td class="border p-2">@result.Right.Level</td></tr>
+                <tr><td class="border p-2">@string.Join(", ", result.Left.Domains ?? new())</td><td class="border p-2">@string.Join(", ", result.Right.Domains ?? new())</td></tr>
+                <tr><td class="border p-2">@string.Join(", ", result.Left.Role ?? new())</td><td class="border p-2">@string.Join(", ", result.Right.Role ?? new())</td></tr>
+                <tr><td class="border p-2">@result.Left.Cost_Usd</td><td class="border p-2">@result.Right.Cost_Usd</td></tr>
+                <tr><td class="border p-2">@result.Left.Duration_Minutes</td><td class="border p-2">@result.Right.Duration_Minutes</td></tr>
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private List<Cert>? certs;
+    private string? leftId;
+    private string? rightId;
+    private CompareResult? result;
+
+    protected override async Task OnInitializedAsync()
+    {
+        certs = await Http.GetFromJsonAsync<List<Cert>>("/api/GetCerts");
+    }
+
+    private async Task DoCompare()
+    {
+        if (string.IsNullOrWhiteSpace(leftId) || string.IsNullOrWhiteSpace(rightId))
+            return;
+
+        var url = $"/api/compare?left={leftId}&right={rightId}";
+        result = await Http.GetFromJsonAsync<CompareResult>(url);
+    }
+
+    public class Cert
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string Provider { get; set; } = "";
+        public string Level { get; set; } = "";
+        public List<string>? Role { get; set; }
+        public List<string>? Domains { get; set; }
+        public int? Cost_Usd { get; set; }
+        public int? Duration_Minutes { get; set; }
+    }
+
+    public class CompareResult
+    {
+        public Cert Left { get; set; } = new();
+        public Cert Right { get; set; } = new();
+        public SummaryData Summary { get; set; } = new();
+    }
+
+    public class SummaryData
+    {
+        public int LevelDifference { get; set; }
+        public double RoleOverlap { get; set; }
+        public double DomainOverlap { get; set; }
+        public int CostDeltaUsd { get; set; }
+        public int DurationDelta { get; set; }
+    }
+}
