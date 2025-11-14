@@ -1074,10 +1074,10 @@ C:\Dev\cloud-cert-paths\web\obj\Debug\net9.0\compressed\4ochvh9yzq-5gh6smvvfi.gz
 C:\Dev\cloud-cert-paths\web\obj\Debug\net9.0\compressed\trpihf0nnt-8vyfqsqgz1.gz
 C:\Dev\cloud-cert-paths\web\obj\Debug\net9.0\compressed\m4va2vdo4y-4r0ievwtqx.gz
 C:\Dev\cloud-cert-paths\web\obj\Debug\net9.0\compressed\gi3wrgqp4b-4d85u1mtcx.gz
-C:\Dev\cloud-cert-paths\web\bin\Debug\net9.0\wwwroot\_framework\web.8rb7azbrrs.wasm
-C:\Dev\cloud-cert-paths\web\bin\Debug\net9.0\wwwroot\_framework\web.qqf52ru504.pdb
-C:\Dev\cloud-cert-paths\web\bin\Debug\net9.0\wwwroot\_framework\web.8rb7azbrrs.wasm.gz
-C:\Dev\cloud-cert-paths\web\bin\Debug\net9.0\wwwroot\_framework\web.qqf52ru504.pdb.gz
-C:\Dev\cloud-cert-paths\web\obj\Debug\net9.0\compressed\mc6l8kk2ij-8rb7azbrrs.gz
-C:\Dev\cloud-cert-paths\web\obj\Debug\net9.0\compressed\f0bbgjcil4-qqf52ru504.gz
-C:\Dev\cloud-cert-paths\web\obj\Debug\net9.0\compressed\umzx5gah1i-3bdm9pa6ms.gz
+C:\Dev\cloud-cert-paths\web\bin\Debug\net9.0\wwwroot\_framework\web.u50scvtt1g.wasm
+C:\Dev\cloud-cert-paths\web\bin\Debug\net9.0\wwwroot\_framework\web.6y4qc1xtm5.pdb
+C:\Dev\cloud-cert-paths\web\bin\Debug\net9.0\wwwroot\_framework\web.u50scvtt1g.wasm.gz
+C:\Dev\cloud-cert-paths\web\bin\Debug\net9.0\wwwroot\_framework\web.6y4qc1xtm5.pdb.gz
+C:\Dev\cloud-cert-paths\web\obj\Debug\net9.0\compressed\mc6l8kk2ij-u50scvtt1g.gz
+C:\Dev\cloud-cert-paths\web\obj\Debug\net9.0\compressed\f0bbgjcil4-6y4qc1xtm5.gz
+C:\Dev\cloud-cert-paths\web\obj\Debug\net9.0\compressed\umzx5gah1i-rnzmt9ealm.gz
