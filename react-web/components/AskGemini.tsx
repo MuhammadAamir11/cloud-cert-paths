@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Certification } from '../types';
-import { askGeminiAboutCerts } from '../services/geminiService';
+import { askGeminiAboutCerts } from '../services/dataService';
 
 interface AskGeminiProps {
     certifications: Certification[];
