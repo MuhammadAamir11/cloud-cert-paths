@@ -1,8 +1,10 @@
 using System.Net;
+using System.Text.Json;
+using System.Linq;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using Api.Services;
+using Api.Services; // for CertRepository and Certification
 
 namespace Api;
 
@@ -21,72 +23,121 @@ public class CompareFunction
     public async Task<HttpResponseData> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "compare")] HttpRequestData req)
     {
-        var query = System.Web.HttpUtility.ParseQueryString(req.Url.Query);
-        var leftId  = query.Get("left");
-        var rightId = query.Get("right");
-
-        if (string.IsNullOrWhiteSpace(leftId) || string.IsNullOrWhiteSpace(rightId))
+        try
         {
-            var bad = req.CreateResponse(HttpStatusCode.BadRequest);
-            await bad.WriteStringAsync("Query params required: left, right (e.g. /api/compare?left=az-900&right=az-104)");
-            return bad;
-        }
+            // Parse query without extra packages
+            var q = ParseQuery(req.Url.Query);
+            q.TryGetValue("left", out var leftId);
+            q.TryGetValue("right", out var rightId);
 
-        var left  = await _repo.FindByIdAsync(leftId);
-        var right = await _repo.FindByIdAsync(rightId);
+            if (string.IsNullOrWhiteSpace(leftId) || string.IsNullOrWhiteSpace(rightId))
+                return await BadRequest(req, "Query params 'left' and 'right' are required.");
 
-        if (left is null || right is null)
-        {
-            var nf = req.CreateResponse(HttpStatusCode.NotFound);
-            await nf.WriteStringAsync($"Not found: {(left is null ? leftId : rightId)}");
-            return nf;
-        }
+            if (string.Equals(leftId, rightId, StringComparison.OrdinalIgnoreCase))
+                return await BadRequest(req, "Left and right must be different certifications.");
 
-        var result = BuildComparison(left, right);
+            var all = await _repo.GetAllAsync();
 
-        var ok = req.CreateResponse(HttpStatusCode.OK);
-        ok.Headers.Add("Content-Type", "application/json; charset=utf-8");
-        await ok.WriteAsJsonAsync(result);
-        return ok;
-    }
+            var left  = all.FirstOrDefault(c => string.Equals(c.Id, leftId,  StringComparison.OrdinalIgnoreCase));
+            var right = all.FirstOrDefault(c => string.Equals(c.Id, rightId, StringComparison.OrdinalIgnoreCase));
 
-    private static ComparisonResult BuildComparison(Certification a, Certification b)
-    {
-        var levelRank = new Dictionary<string,int>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["Fundamental"] = 1, ["Associate"] = 2, ["Professional"] = 3, ["Expert"] = 3
-        };
-        int Rank(string? lvl) => (lvl != null && levelRank.TryGetValue(lvl, out var r)) ? r : 0;
+            if (left is null)  return await NotFound(req, $"Certification with id '{leftId}' was not found.");
+            if (right is null) return await NotFound(req, $"Certification with id '{rightId}' was not found.");
 
-        static double Overlap(IEnumerable<string> x, IEnumerable<string> y)
-        {
-            var xs = x.Select(s => s.Trim().ToLowerInvariant()).Where(s => !string.IsNullOrWhiteSpace(s)).ToHashSet();
-            var ys = y.Select(s => s.Trim().ToLowerInvariant()).Where(s => !string.IsNullOrWhiteSpace(s)).ToHashSet();
-            if (xs.Count == 0 && ys.Count == 0) return 1.0;
-            var inter = xs.Intersect(ys).Count();
-            var union = xs.Union(ys).Count();
-            return union == 0 ? 0 : (double)inter / union;
-        }
+            var summary = BuildSummary(left, right);
 
-        return new ComparisonResult
-        {
-            Left  = a,
-            Right = b,
-            Summary = new ComparisonSummary
+            var result = new ComparisonResult
             {
-                LevelDifference = Rank(a.Level) - Rank(b.Level),
-                RoleOverlap     = Math.Round(Overlap(a.Role, b.Role) * 100, 1),
-                DomainOverlap   = Math.Round(Overlap(a.Domains, b.Domains) * 100, 1),
-                CostDeltaUsd    = (a.Cost_Usd ?? 0) - (b.Cost_Usd ?? 0),
-                DurationDelta   = (a.Duration_Minutes ?? 0) - (b.Duration_Minutes ?? 0)
-            }
+                Left = left,
+                Right = right,
+                Summary = summary
+            };
+
+            var res = req.CreateResponse(HttpStatusCode.OK);
+            // Manual JSON write to avoid WriteAsJsonAsync overload mismatch
+            var json = JsonSerializer.Serialize(result, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            });
+            res.Headers.Add("Content-Type", "application/json; charset=utf-8");
+            await res.WriteStringAsync(json);
+            return res;
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Compare failed.");
+            var err = req.CreateResponse(HttpStatusCode.InternalServerError);
+            await err.WriteStringAsync("Compare failed.");
+            return err;
+        }
+    }
+
+    // ---- Helpers ----
+
+    // Minimal query parser (avoids Microsoft.AspNetCore.WebUtilities)
+    private static Dictionary<string, string> ParseQuery(string query)
+    {
+        var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrEmpty(query)) return dict;
+        if (query.StartsWith("?")) query = query[1..];
+
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var kv = part.Split('=', 2);
+            var k = Uri.UnescapeDataString(kv[0] ?? "");
+            var v = kv.Length > 1 ? Uri.UnescapeDataString(kv[1]) : "";
+            if (!string.IsNullOrWhiteSpace(k)) dict[k] = v;
+        }
+        return dict;
+    }
+
+    private static ComparisonSummary BuildSummary(Api.Services.Certification left, Api.Services.Certification right)
+    {
+        static int LevelRank(string? s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return 0;
+            return s.Trim().ToLowerInvariant() switch
+            {
+                "fundamentals" or "foundation"                          => 1,
+                "associate"                                             => 2,
+                "professional" or "expert" or "specialty" or "special" => 3,
+                _                                                        => 0
+            };
+        }
+
+        static double Jaccard(IEnumerable<string>? a, IEnumerable<string>? b)
+        {
+            var A = new HashSet<string>((a ?? Array.Empty<string>()).Where(s => !string.IsNullOrWhiteSpace(s)),
+                                        StringComparer.OrdinalIgnoreCase);
+            var B = new HashSet<string>((b ?? Array.Empty<string>()).Where(s => !string.IsNullOrWhiteSpace(s)),
+                                        StringComparer.OrdinalIgnoreCase);
+            if (A.Count == 0 && B.Count == 0) return 0.0;
+            var inter = A.Intersect(B, StringComparer.OrdinalIgnoreCase).Count();
+            var union = A.Union(B,   StringComparer.OrdinalIgnoreCase).Count();
+            if (union == 0) return 0.0;
+            return Math.Round(100.0 * inter / union, 1);
+        }
+
+        static int Delta(int? l, int? r) => (l ?? 0) - (r ?? 0);
+
+        return new ComparisonSummary
+        {
+            // + = Left higher, - = Right higher
+            LevelDifference = LevelRank(left.Level) - LevelRank(right.Level),
+            RoleOverlap     = Jaccard(left.Role,    right.Role),
+            DomainOverlap   = Jaccard(left.Domains, right.Domains),
+            // + = Left more expensive/longer
+            CostDeltaUsd    = Delta(left.Cost_Usd, right.Cost_Usd),
+            DurationDelta   = Delta(left.Duration_Minutes, right.Duration_Minutes)
         };
     }
 
+    // Response model (explicitly use fully-qualified types)
     public class ComparisonResult
     {
-        public Certification Left { get; set; } = default!;
-        public Certification Right { get; set; } = default!;
+        public Api.Services.Certification Left { get; set; } = default!;
+        public Api.Services.Certification Right { get; set; } = default!;
         public ComparisonSummary Summary { get; set; } = new();
     }
 
@@ -97,5 +148,17 @@ public class CompareFunction
         public double DomainOverlap   { get; set; }
         public int    CostDeltaUsd    { get; set; }
         public int    DurationDelta   { get; set; }
+    }
+
+    private static Task<HttpResponseData> BadRequest(HttpRequestData req, string msg) =>
+        CreateText(req, HttpStatusCode.BadRequest, msg);
+    private static Task<HttpResponseData> NotFound(HttpRequestData req, string msg) =>
+        CreateText(req, HttpStatusCode.NotFound, msg);
+
+    private static async Task<HttpResponseData> CreateText(HttpRequestData req, HttpStatusCode code, string msg)
+    {
+        var r = req.CreateResponse(code);
+        await r.WriteStringAsync(msg);
+        return r;
     }
 }

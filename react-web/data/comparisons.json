@@ -1,0 +1,39 @@
+
+{
+    "az-104_aws-saa-c03": [
+        {
+            "id": "aws-saa-c03",
+            "targetAudience": "Individuals who have experience designing distributed applications. It is for those who want to validate their ability to design and implement well-architected solutions on AWS.",
+            "careerBenefit": "Opens doors to roles like Cloud Architect, Solutions Architect, and Cloud Engineer. It is one of the most sought-after certifications in the cloud industry.",
+            "jobMarketBenefit": "Extremely high. Many companies migrating to or building on AWS explicitly require this certification for cloud architecture roles.",
+            "estimatedCost": "$400 - $800 USD (including exam and quality training).",
+            "officialLink": "https://aws.amazon.com/certification/certified-solutions-architect-associate/"
+        },
+        {
+            "id": "az-104",
+            "targetAudience": "Azure Administrators who manage cloud services that span storage, networking, and compute cloud capabilities, with a deep understanding of each service across the full IT lifecycle.",
+            "careerBenefit": "Prepares individuals for roles like Cloud Administrator, Azure Administrator, and Systems Administrator for cloud environments.",
+            "jobMarketBenefit": "Very strong, especially in enterprises that have a significant Microsoft footprint and are transitioning to Azure.",
+            "estimatedCost": "$400 - $700 USD (including exam and quality training).",
+            "officialLink": "https://docs.microsoft.com/en-us/learn/certifications/exams/az-104"
+        }
+    ],
+    "aws-clf-c02_gcp-cde": [
+        {
+            "id": "aws-clf-c02",
+            "targetAudience": "Anyone looking to build a foundational knowledge of the AWS cloud, including those in technical, managerial, sales, purchasing, or financial roles.",
+            "careerBenefit": "A great entry-point into cloud computing and the AWS ecosystem. It provides the vocabulary and basic concepts needed for more advanced certifications.",
+            "jobMarketBenefit": "Good for entry-level roles or for non-technical professionals who need to communicate effectively about AWS services.",
+            "estimatedCost": "$100 - $250 USD (including exam and training).",
+            "officialLink": "https://aws.amazon.com/certification/certified-cloud-practitioner/"
+        },
+        {
+            "id": "gcp-cde",
+            "targetAudience": "Business professionals, such as marketers, sales leaders, and executives, who are not necessarily technical but need to understand cloud concepts to make business decisions.",
+            "careerBenefit": "Validates a broad knowledge of cloud concepts and how Google Cloud products and services can help an organization's business goals.",
+            "jobMarketBenefit": "Beneficial for roles involved in business strategy and digital transformation within organizations that use or are considering Google Cloud.",
+            "estimatedCost": "$99 - $200 USD (including exam and training).",
+            "officialLink": "https://cloud.google.com/certification/cloud-digital-leader"
+        }
+    ]
+}

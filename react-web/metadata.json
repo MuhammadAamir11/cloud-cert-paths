@@ -1,0 +1,5 @@
+{
+  "name": "Cloud Cert Navigator",
+  "description": "An interactive web application to compare cloud certifications and visualize learning paths for AWS, Azure, and GCP, powered by Gemini.",
+  "requestFramePermissions": []
+}
