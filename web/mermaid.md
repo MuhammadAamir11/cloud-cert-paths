@@ -30,6 +30,3 @@ AzureFunc -->|Read| JSONFile
 %% AzureFunc -->|Future Query| DB
 
 
-
-endgraph
-```
