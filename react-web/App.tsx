@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
-import { fetchCertificationData } from './services/geminiService';
+import { fetchCertificationData } from './services/dataService';
 import { Certification, CloudProvider } from './types';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorDisplay } from './components/ErrorDisplay';
