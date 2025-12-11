@@ -1,16 +1,9 @@
 import { Certification, ComparisonData } from '../types';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-
 export const fetchCertificationData = async (): Promise<Certification[]> => {
   try {
-    // In production (SWA), we'll use the cloud API.
-    // In dev (npm run dev), we keep using the local JSON file.
-    const useCloudApi = !import.meta.env.DEV && !!BASE_URL;
-
-    const url = useCloudApi
-      ? `${BASE_URL}/api/certifications`
-      : '/data/certifications.json';
+    // Use the same JSON file for dev and production
+    const url = '/data/certifications.json';
 
     console.log('Fetching certifications from:', url);
 
@@ -23,6 +16,9 @@ export const fetchCertificationData = async (): Promise<Certification[]> => {
 
     let certifications: Certification[];
 
+    // Support both:
+    // 1) { certifications: [...] }
+    // 2) [ { ... } ]
     if (Array.isArray(data)) {
       certifications = data as Certification[];
     } else if (data && Array.isArray((data as any).certifications)) {
@@ -32,7 +28,7 @@ export const fetchCertificationData = async (): Promise<Certification[]> => {
       throw new Error('Failed to parse certification data.');
     }
 
-    // If passScore is 0–1000, convert to percentage.
+    // If passScore is 0–1000, convert to percentage (keep your old logic)
     return certifications.map((cert: Certification) => {
       if (cert.passScore > 100) {
         return {
