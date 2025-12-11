@@ -1,14 +1,11 @@
 import { Certification, ComparisonData } from '../types';
 
-// Read the base URL from Vite env.
-// In dev we will ignore this and use the local JSON file.
-// In production (Static Web Apps) we will use this.
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export const fetchCertificationData = async (): Promise<Certification[]> => {
   try {
-    // Use cloud API only in production builds when BASE_URL is set.
-    // In dev (npm run dev), keep using the local JSON file.
+    // In production (SWA), we'll use the cloud API.
+    // In dev (npm run dev), we keep using the local JSON file.
     const useCloudApi = !import.meta.env.DEV && !!BASE_URL;
 
     const url = useCloudApi
@@ -26,19 +23,16 @@ export const fetchCertificationData = async (): Promise<Certification[]> => {
 
     let certifications: Certification[];
 
-    // Support both:
-    // 1) { certifications: [...] }  (local JSON file)
-    // 2) [ { ... } ]                (API returning a plain array)
     if (Array.isArray(data)) {
       certifications = data as Certification[];
-    } else if (data && Array.isArray(data.certifications)) {
-      certifications = data.certifications as Certification[];
+    } else if (data && Array.isArray((data as any).certifications)) {
+      certifications = (data as any).certifications as Certification[];
     } else {
       console.error('Unexpected JSON structure:', data);
       throw new Error('Failed to parse certification data.');
     }
 
-    // If passScore is on a 0–1000 scale, convert it to percentage.
+    // If passScore is 0–1000, convert to percentage.
     return certifications.map((cert: Certification) => {
       if (cert.passScore > 100) {
         return {
@@ -58,7 +52,6 @@ export const fetchComparisonData = async (): Promise<ComparisonData[]> => {
   try {
     const certifications = await fetchCertificationData();
 
-    // Generate comparison data from the certifications list
     return certifications.map(cert => ({
       id: cert.id,
       targetAudience: 'Comparison data not available in static file.',
