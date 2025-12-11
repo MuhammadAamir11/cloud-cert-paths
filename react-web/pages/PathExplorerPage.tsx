@@ -32,15 +32,27 @@ export const PathExplorerPage: React.FC<PathExplorerPageProps> = ({ allCertifica
     };
 
     const filteredCertifications = useMemo(() => {
-        return allCertifications.filter(cert => {
-            const providerMatch = activeProviders.size === 0 || activeProviders.has(cert.provider);
-            // Normalize search term and exam code for flexible matching
-            const normalizedSearch = examCodeSearch.replace(/-/g, '').toLowerCase();
-            const normalizedExamCode = cert.examCode.replace(/-/g, '').toLowerCase();
-            const examCodeMatch = normalizedSearch.trim() === '' || normalizedExamCode.includes(normalizedSearch.trim());
-            return providerMatch && examCodeMatch;
-        });
-    }, [allCertifications, activeProviders, examCodeSearch]);
+    return allCertifications.filter(cert => {
+        const providerMatch =
+            activeProviders.size === 0 || activeProviders.has(cert.provider);
+
+        // Safely normalize search term and exam code for flexible matching
+        const normalizedSearch = (examCodeSearch || '')
+            .replace(/-/g, '')
+            .toLowerCase();
+
+        const normalizedExamCode = (cert.examCode || '')
+            .replace(/-/g, '')
+            .toLowerCase();
+
+        const examCodeMatch =
+            normalizedSearch.trim() === '' ||
+            normalizedExamCode.includes(normalizedSearch.trim());
+
+        return providerMatch && examCodeMatch;
+    });
+}, [allCertifications, activeProviders, examCodeSearch]);
+
 
     const groupedCerts = useMemo(() => {
         const groups: Partial<Record<Level, Certification[]>> = {};
