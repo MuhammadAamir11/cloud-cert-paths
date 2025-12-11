@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Certification, ComparisonData, Difficulty } from '../types';
-import { fetchComparisonData } from '../services/geminiService';
+import { fetchComparisonData } from '../services/dataService';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ErrorDisplay } from './ErrorDisplay';
 import { providerIcons } from './ProviderIcons';

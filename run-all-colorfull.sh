@@ -51,3 +51,4 @@ echo $SWA_PID > .swa_pid
 trap 'echo -e "\n${RED}🛑 Stopping all services...${NC}"; kill $FUNC_PID $BLAZOR_PID $SWA_PID 2>/dev/null; rm -f .func_pid .blazor_pid .swa_pid; exit 0' SIGINT
 
 wait
+wait
