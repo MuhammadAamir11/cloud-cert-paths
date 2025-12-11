@@ -19,7 +19,7 @@ public class GetCerts
 
     [Function("GetCerts")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "certifications")] HttpRequestData req)
     {
         try
         {
